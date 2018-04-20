@@ -73,7 +73,7 @@ def get_from_cache(location):
 		fw = open(API_CACHE,"w")
 		fw.write(dumped_json_cache)
 		fw.close() # Close the open file
-		print(API_CACHE_DICT[location])
+		#print(API_CACHE_DICT[location])
 		return API_CACHE_DICT[location]
 
 class store:
@@ -298,4 +298,3 @@ def interaction():
 
 if __name__ == "__main__":
 	interaction()
- 
