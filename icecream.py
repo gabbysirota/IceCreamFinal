@@ -77,84 +77,13 @@ def get_from_cache(location):
 		return API_CACHE_DICT[location]
 
 class store:
-	def __init__(self, name, address, review):
+	def __init__(self, name, address):
 		self.name = name
 		self.address = address
-		self.review = review
 	def __str__(self):
-		return "Someone said: {} about {}".format(self.review, self.name)
+		return "{} is located at {}".format(self.name, self.address)
 
-# def scrape(location, storename):
-# 	start_number = 0
-# 	for x in range(0, 100, 10):
-# 		page_text = make_request_using_cache("https://www.yelp.com/search", params = {"find_loc" : "ann arbor, mi", "find_desc":"ice cream"})
-# 		page_soup = BeautifulSoup(page_text, 'html.parser')
-# 		print(page_soup)
-		# all_store_container = page_soup.find_all("ul", class_="ylist ylist-bordered search-results js-search-results yloca-pills-blue yloca-wrapper-grey")
-		# store_container = all_store_container[1]
-		# store_lists = store_container.find_all("li", class_="regular-search-result")
-		# # print(store_lists[0].prettify())
-		# store_list_names = []
-		# # for store in store_lists:
-		# # 	first = store.find("div", {"data-biz-id" : "W4WNypFs--aQfpG0V5gsxQ"})
-		# # 	second = first.find("div", class_="biz-listing-large")
-		# # 	second_one = second.find("div", class_="media-block media-block--18")
-		# # 	print(second.prettify())
-		# # 	third = second_one.find("div", class_="media-attributes")
-		# # 	fourth = third.find("div", class_="media-block media-block--12")
-		# # 	fifth = fourth.find("div", class_="media-story")
-		# # 	sixth = fifth.find("h3", class_="search-result-title")
-		# # 	seven = sixth.find("a", class_="biz-name jas-analytics-click")
-		# # 	store_name = seven.find("span").text
-		# # 	store_name = store.find("h3", class_= "search-result-title").text
-		# for store in store_lists:
-		# 	first = store.find("div", class_="search-result natural-search-result scrollable-photos-search-result")
-		# 	second = first.find("div", class_="biz-listing-large")
-		# 	second_one = second.find("div", class_="media-block media-block--18")
-		# 	third = second_one.find("div", class_="media-story")
-		# 	fourth = third.find("div", class_="biz-attributes")
-		# 	fifth = fourth.find("div", class_="main-attributes")
-		# 	sixth = fifth.find("h3", class_="search-result-title")
-		# 	seven = sixth.find("span", class_="indexed-biz-name")
-		# 	eight = seven.find("a")
-		# 	store_name = eight.find("span").text
-		# 	print(store_name)
-		# 	# sixth = fifth.find("h3", class_="search-result-title")
-		# 	# seven = sixth.find("a", class_="biz-name jas-analytics-click")
-		# 	# store_name = seven.find("span").text
-		# 	# store_name = store.find("h3", class_= "search-result-title").text
-		# 	if store_name == storename:
-		# 		url = eight["href"]
-		# 		second_page = make_request_using_cache("https://www.yelp.com/{}".format(url))
-		# 		print("did it")
-		# 		soup = BeautifulSoup(second_page, "html.parser")
-		# 		container = soup.find("div", class_= "map-box-address")
-		# 		store_address = container.find("address").text
-		# 		return store_address
-
-
-
-
-
-
-
-# inp = input('Enter a location: ')
-# x = get_from_cache(inp)
-# #print(len(x['businesses']))
-#
-# r = get_from_cache("ann arbor, mi")
-# s = json.dumps(r)
-# page_soup = BeautifulSoup(s, 'html.parser')
-# print(page_soup)
-# page_text = get_from_cache(location)
-# page_soup = BeautifulSoup(page_text, 'html.parser')
-# print (page_soup)
-
-
-# 	data = get_from_cache(location)
-# 	soup = BeautifulSoup(data, "html.parser")
-# 	return soup
-# print (get_store_info("ann arbor, mi"))
+store_instances = []
 
 DBNAME = 'icecream.db'
 #BARSCSV = 'flavors_of_cacao_cleaned.csv'
@@ -223,26 +152,31 @@ def insert_scrape_icecream(data):
 	conn.close()
 
 def scrape(location, storename):
-	result = make_request_using_cache("https://www.yelp.com/search", params = {"find_loc" : location, "find_desc":"ice cream"})
-	soup = BeautifulSoup(result, 'html.parser')
-	## content = soup.find(class_='main-content-wrap main-content-wrap--full')
-	search_results = soup.find_all('address')
-	name_results = soup.find_all('h3', class_='search-result-title')
-	count = 1
-	address_dict = {}
-	for name in name_results:
-		x = name.text.strip()
-		if '.' in x:
-			address_dict[x] = search_results[count].text.strip()
-			count += 1
-	# for address in search_results:
-	# 	print(address.text.strip())
-	for item in list(address_dict.keys()):
-		if storename in item:
-			save_address = address_dict[item]
-	all_data = (storename, save_address, "store_id", location)
-	insert_scrape_icecream(all_data)
-	return "done"
+	start_number = 0
+	for x in range(0, 20, 10):
+		result = make_request_using_cache("https://www.yelp.com/search", params = {"find_loc" : location, "find_desc":"ice cream", "start": x})
+		soup = BeautifulSoup(result, 'html.parser')
+		## content = soup.find(class_='main-content-wrap main-content-wrap--full')
+		search_results = soup.find_all('address')
+		name_results = soup.find_all('h3', class_='search-result-title')
+		for each in name_results:
+			y = each.text.strip()
+			if storename in y:
+				span = each.find('span', class_='indexed-biz-name')
+				if span:
+					url = span.find('a')['href']
+					second_page = requests.get("https://www.yelp.com/{}".format(url)).text
+					#second_page = make_request_using_cache("https://www.yelp.com/{}".format(url))
+					soup = BeautifulSoup(second_page, "html.parser")
+					new_soup = soup.find_all('address')[0]
+					clean = new_soup.text.strip()
+					store_instances_names = [s.name for s in store_instances]
+					new_store = store(storename, clean)
+					if new_store.name not in store_instances_names:
+						store_instances.append(new_store)
+					all_data = (new_store.name, new_store.address, "store_id", location)
+					insert_scrape_icecream(all_data)
+					return clean
 
 def rating_sort():
 	conn = sqlite3.connect(DBNAME)
@@ -354,10 +288,13 @@ def interaction():
 					count += 1
 					number = '{}: '.format(count)
 					print(number, store)
+				store_inp = input('Type a store name exactly as it appears: ')
+				info = scrape(inp, store_inp)
+				print(info)
 			elif results_inp == 'view all graphs':
 				generate_graphs()
 			else:
 				print('Please enter a valid command')
 
-#interaction()
-get_address("https://www.yelp.com/search?cflt=icecream&find_loc=Ann+Arbor%2C+MI")
+if __name__ == "__main__":
+	interaction()
