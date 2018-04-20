@@ -6,7 +6,8 @@ SI206 final project
 This program uses the yelp fusion API. To get an API key you must create an account and then create an app using this site: https://www.yelp.com/developers/v3/manage_app. To use the keys, you must enter them into a file titled secrets.py (which is included in the git ignore file).
 
 Format for secrets.py
-Client_ID = ''                                                                                                           APIKey = ''
+Client_ID = ''
+APIKey = ''
 
 ● Any other information needed to run the program (e.g., pointer to getting started info for plotly)
 First, create a plotly account. Here is a useful page for getting started with plotly: https://plot.ly/python/getting-started/. Make sure to follow the installation directions. Also, you must initialize for online plotting and set your credentials. Use the following code and enter your individual username and api_key:
