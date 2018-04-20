@@ -73,7 +73,7 @@ def get_from_cache(location):
 		fw = open(API_CACHE,"w")
 		fw.write(dumped_json_cache)
 		fw.close() # Close the open file
-		#print(API_CACHE_DICT[location])
+		print(type(API_CACHE_DICT[location]))
 		return API_CACHE_DICT[location]
 
 class store:
@@ -152,8 +152,10 @@ def insert_scrape_icecream(data):
 	conn.close()
 
 def scrape(location, storename):
+	conn = sqlite3.connect(DBNAME)
+	cur = conn.cursor()
 	start_number = 0
-	for x in range(0, 20, 10):
+	for x in range(0, 100, 10):
 		result = make_request_using_cache("https://www.yelp.com/search", params = {"find_loc" : location, "find_desc":"ice cream", "start": x})
 		soup = BeautifulSoup(result, 'html.parser')
 		## content = soup.find(class_='main-content-wrap main-content-wrap--full')
@@ -174,7 +176,8 @@ def scrape(location, storename):
 					new_store = store(storename, clean)
 					if new_store.name not in store_instances_names:
 						store_instances.append(new_store)
-					all_data = (new_store.name, new_store.address, "store_id", location)
+					s_id = cur.execute('SELECT Id FROM IceCream WHERE Name = "%s"'%new_store.name).fetchone()
+					all_data = (new_store.name, new_store.address, s_id[0], location)
 					insert_scrape_icecream(all_data)
 					return clean
 
@@ -202,7 +205,13 @@ def generate_graphs():
             x=stores,
             y=distances
     )]
-	py.plot(data, filename='Distances')
+	layout = go.Layout(
+	title='Distances of Ice Cream Stores (in km)',
+	xaxis=dict(title='Stores'),
+	yaxis=dict(title='Distance in km')
+	)
+	fig = go.Figure(data=data, layout=layout)
+	py.plot(fig, filename='Distances')
 
 	x = cur.execute('SELECT Name, ReviewCount FROM IceCream').fetchall()
 	stores1 = [store[0] for store in x]
@@ -211,7 +220,13 @@ def generate_graphs():
             x=stores1,
             y=review_counts
     )]
-	py.plot(data1, filename='Review Counts')
+	layout1 = go.Layout(
+	title='Review Counts of Ice Cream Stores',
+	xaxis=dict(title='Stores'),
+	yaxis=dict(title='Number of Reviews')
+	)
+	fig1 = go.Figure(data=data1, layout=layout1)
+	py.plot(fig1, filename='Review Counts')
 
 	z = cur.execute('SELECT Rating FROM IceCream').fetchall()
 	review_d = {}
@@ -226,8 +241,10 @@ def generate_graphs():
 	values = ratings
 
 	trace = go.Pie(labels=labels, values=values)
-
-	py.plot([trace], filename='Rating Distribution')
+	layout2 = go.Layout(
+	title='Rating Distribution')
+	fig2 = go.Figure(data=[trace], layout=layout2)
+	py.plot(fig2, filename='Rating Distribution')
 
 	a = cur.execute('SELECT Name, Rating FROM IceCream ORDER BY Rating DESC').fetchone()
 	b = cur.execute('SELECT Name, ReviewCount FROM IceCream ORDER BY ReviewCount DESC').fetchone()
@@ -239,9 +256,11 @@ def generate_graphs():
 	trace1 = go.Bar(x=['Rating', 'Review Count'],y=[top_rated_info[1], top_rated_info[1]],name=top_rated_info[0])
 	trace2 = go.Bar(x=['Rating', 'Review Count'],y=[top_reviewed_info[1], top_reviewed_info[1]], name=top_reviewed_info[0])
 	data = [trace1, trace2]
-	layout = go.Layout(barmode='group')
-	fig = go.Figure(data=data, layout=layout)
+	layout3 = go.Layout(barmode='group', title='Rating vs Review Count For Top Two Stores', xaxis=dict(title='Stores'), yaxis=dict(title='Values'))
+	fig = go.Figure(data=data, layout=layout3)
 	py.plot(fig, filename='Top Rated vs Top Reviewed')
+
+	return (stores, distances, stores1, review_counts)
 
 def interaction():
 	inp = ''
